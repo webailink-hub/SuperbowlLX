@@ -10,89 +10,142 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --brand-red: #CD1041; /* Sports Red */
-            --brand-black: #111111;
+            --pats-blue: #002244;
+            --pats-red: #C60C30;
+            --hawks-blue: #002244; /* Using Dark Navy */
+            --hawks-green: #69BE28;
             --brand-gray: #f2f2f2;
         }
-        body { font-family: 'Roboto', sans-serif; background-color: var(--brand-gray); }
-        h1, h2, h3, .brand-font { font-family: 'Teko', sans-serif; text-transform: uppercase; }
+        body { font-family: 'Roboto Condensed', sans-serif; background-color: var(--brand-gray); }
+        .teko { font-family: 'Teko', sans-serif; text-transform: uppercase; }
         
-        /* Sticky Grid Magic */
-        .grid-container {
+        /* --- COMPLEX GRID LAYOUT --- */
+        .grid-wrapper {
             display: grid;
-            grid-template-columns: 50px repeat(10, minmax(60px, 1fr)); /* Fixed sidebar, flexible cols */
+            /* Sidebar (Team), Sidebar (Nums), 10 Grid Cols */
+            grid-template-columns: 40px 50px repeat(10, minmax(60px, 1fr)); 
             overflow: auto;
-            max-height: 70vh; /* Scrollable height */
+            max-height: 75vh;
             position: relative;
             background: white;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
+            scroll-behavior: smooth;
         }
-        
-        /* The Top-Left Corner (Fixed) */
-        .grid-corner {
+
+        /* 1. Team Header (Top) */
+        .header-team-top {
+            grid-column: 3 / span 10;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: var(--pats-blue);
+            color: white;
+            text-align: center;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.5rem;
+            line-height: 2rem;
+            border-bottom: 2px solid var(--pats-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* 2. Top Numbers Row */
+        .header-nums-top {
+            position: sticky;
+            top: 32px; /* Height of header-team-top approx */
+            z-index: 30;
+            background: #fff;
+            border-bottom: 2px solid #ccc;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            color: var(--pats-blue);
+        }
+
+        /* 3. Team Header (Left Vertical) */
+        .header-team-left {
+            grid-row: 3 / span 10;
+            grid-column: 1;
+            position: sticky;
+            left: 0;
+            z-index: 40;
+            background: white;
+            color: var(--hawks-blue);
+            border-right: 2px solid var(--hawks-green);
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            text-align: center;
+            font-family: 'Teko', sans-serif;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        /* 4. Side Numbers Col */
+        .header-nums-left {
+            position: sticky;
+            left: 40px; /* Width of header-team-left */
+            z-index: 30;
+            background: #fff;
+            border-right: 2px solid #ccc;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--hawks-blue);
+        }
+
+        /* Corner Block (Top Left empty space) */
+        .corner-block {
+            grid-column: 1 / span 2;
+            grid-row: 1 / span 2;
             position: sticky;
             top: 0;
             left: 0;
-            z-index: 30;
-            background: var(--brand-black);
+            z-index: 50;
+            background: #111;
             color: white;
-            border-bottom: 2px solid var(--brand-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            border-bottom: 1px solid #333;
             border-right: 1px solid #333;
         }
-
-        /* Top Header Row (Sticky Vertical) */
-        .grid-header-top {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background: var(--brand-black);
-            color: white;
-            border-bottom: 4px solid var(--brand-red);
-        }
-
-        /* Left Header Col (Sticky Horizontal) */
-        .grid-header-left {
-            position: sticky;
-            left: 0;
-            z-index: 20;
-            background: var(--brand-black);
-            color: white;
-            border-right: 4px solid var(--brand-red);
-        }
-
-        /* Highlight Animations */
-        @keyframes pulse-winner {
-            0% { background-color: #fbbf24; transform: scale(1); }
-            50% { background-color: #f59e0b; transform: scale(1.05); }
-            100% { background-color: #fbbf24; transform: scale(1); }
-        }
+        
         .winner-cell {
-            animation: pulse-winner 2s infinite;
-            z-index: 10;
-            box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
-            border: 2px solid black !important;
+            background-color: #fbbf24 !important;
+            color: black !important;
+            font-weight: 900;
+            border: 2px solid black;
+            animation: pulse 2s infinite;
         }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
-        /* Hide scrollbars for cleaner look but keep functionality */
-        .no-scrollbar::-webkit-scrollbar { width: 0; height: 0; }
+        /* Hide scrollbars */
+        .grid-wrapper::-webkit-scrollbar { width: 6px; height: 6px; }
+        .grid-wrapper::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
     </style>
 </head>
-<body class="text-slate-900">
+<body class="text-slate-900 pb-20">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect, useMemo } = React;
 
-        // --- Data ---
-        const TEAMS = {
-            top: { name: 'Patriots', color: '#002244', abbr: 'NE' },
-            side: { name: 'Seahawks', color: '#005C5C', abbr: 'SEA' }
-        };
-
+        // --- Mock Data ---
         const INITIAL_GRID = [
             ['Janette', 'Gary', 'Vince', 'Franco', 'Rick', 'Barajas', '', 'Janette', 'Franco', ''],
             ['Peter K', '', 'Lalo', '', 'Tia', 'Gigi', 'Connor T', 'Rick', 'Lalo', ''],
@@ -105,250 +158,262 @@
             ['Lalo', 'Connor T', 'Rick', 'Lalo', 'Barajas', 'Gigi', '', 'Peter K', '', 'Andrew'],
             ['Fabian', 'Nate', '', 'Janette', '', '', 'Franco', '', '', 'Rick']
         ];
-        
+
         // --- Components ---
 
+        const Countdown = () => {
+            // Target: Feb 8, 2026 3:30 PM PST
+            const target = new Date('2026-02-08T15:30:00-08:00').getTime();
+            const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+            function calculateTimeLeft() {
+                const now = new Date().getTime(); // Uses current system time
+                const difference = target - now;
+                
+                if (difference <= 0) return null;
+
+                return {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60)
+                };
+            }
+
+            useEffect(() => {
+                const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            if (!timeLeft) return <div className="bg-red-600 text-white text-center py-2 font-bold animate-pulse">LIVE NOW</div>;
+
+            return (
+                <div className="bg-black text-white py-2 px-4 flex justify-between items-center text-xs md:text-sm">
+                    <span className="text-gray-400 uppercase tracking-widest font-bold">Kickoff In:</span>
+                    <div className="font-mono text-[var(--pats-red)] font-bold">
+                        {timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s
+                    </div>
+                </div>
+            );
+        };
+
+        const ScoreInput = ({ label, scores, quarter, setScore }) => (
+            <div className="flex flex-col items-center bg-gray-50 p-2 rounded border border-gray-200">
+                <span className="text-[10px] font-bold text-gray-400 uppercase mb-1">{label}</span>
+                <div className="flex gap-2 items-center">
+                    <input 
+                        type="number" 
+                        placeholder="NE"
+                        className="w-10 text-center font-bold border-b-2 border-blue-900 bg-transparent outline-none"
+                        value={scores[quarter]?.top ?? ''}
+                        onChange={(e) => setScore(quarter, 'top', e.target.value)}
+                    />
+                    <span className="text-gray-300">:</span>
+                    <input 
+                        type="number" 
+                        placeholder="SEA"
+                        className="w-10 text-center font-bold border-b-2 border-green-600 bg-transparent outline-none"
+                        value={scores[quarter]?.side ?? ''}
+                        onChange={(e) => setScore(quarter, 'side', e.target.value)}
+                    />
+                </div>
+            </div>
+        );
+
+        const WinnerCard = ({ title, amount, winner, grid }) => (
+            <div className={`flex justify-between items-center p-2 rounded border-l-4 ${winner ? 'bg-yellow-50 border-yellow-400' : 'bg-white border-gray-200 opacity-60'}`}>
+                <div>
+                    <div className="text-[10px] font-bold text-gray-500 uppercase">{title} <span className="text-green-600 ml-1">${amount}</span></div>
+                    <div className="font-bold text-lg leading-none mt-1">{winner || "—"}</div>
+                </div>
+                {winner && (
+                    <div className="text-[10px] bg-white px-2 py-1 rounded border border-gray-200 shadow-sm font-mono">
+                         {grid.side}-{grid.top}
+                    </div>
+                )}
+            </div>
+        );
+
         function App() {
-            // Load State
+            // State
             const [grid, setGrid] = useState(() => load('sb_grid', INITIAL_GRID));
             const [topNums, setTopNums] = useState(() => load('sb_topNums', [0,1,2,3,4,5,6,7,8,9]));
             const [sideNums, setSideNums] = useState(() => load('sb_sideNums', [0,1,2,3,4,5,6,7,8,9]));
-            const [score, setScore] = useState(() => load('sb_score', { top: 0, side: 0 }));
+            const [scores, setScores] = useState(() => load('sb_scores', {
+                q1: { top: '', side: '' },
+                q2: { top: '', side: '' },
+                q3: { top: '', side: '' },
+                final: { top: '', side: '' }
+            }));
             const [isEditing, setIsEditing] = useState(false);
-            const [activeTab, setActiveTab] = useState('grid'); // 'grid' or 'payouts'
 
-            // Save State
+            // Persistence
             useEffect(() => save('sb_grid', grid), [grid]);
             useEffect(() => save('sb_topNums', topNums), [topNums]);
             useEffect(() => save('sb_sideNums', sideNums), [sideNums]);
-            useEffect(() => save('sb_score', score), [score]);
+            useEffect(() => save('sb_scores', scores), [scores]);
 
-            // Logic
-            const lastDigit = (n) => Math.abs(n) % 10;
-            const winTopDigit = lastDigit(score.top);
-            const winSideDigit = lastDigit(score.side);
-            
-            // Winning Coordinates (Visual Index)
-            const winColIdx = topNums.indexOf(winTopDigit);
-            const winRowIdx = sideNums.indexOf(winSideDigit);
-            
-            // Get Winner Name
-            const winnerName = (winRowIdx !== -1 && winColIdx !== -1) 
-                ? (grid[winRowIdx][winColIdx] || "OPEN") 
-                : "PENDING";
-
-            // Helpers
             function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch { return d; } }
             function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
-            const updateGrid = (r, c, val) => {
-                const newG = [...grid];
-                newG[r][c] = val;
-                setGrid(newG);
-            };
-
-            const updateHeader = (axis, idx, val) => {
-                const num = parseInt(val);
-                if (isNaN(num)) return;
-                const digit = Math.abs(num) % 10;
+            // Logic
+            const getWinner = (q) => {
+                const s = scores[q];
+                if (s.top === '' || s.side === '') return null;
+                const tDigit = Math.abs(parseInt(s.top) || 0) % 10;
+                const sDigit = Math.abs(parseInt(s.side) || 0) % 10;
                 
-                if (axis === 'top') {
-                    const newN = [...topNums];
-                    newN[idx] = digit;
-                    setTopNums(newN);
-                } else {
-                    const newN = [...sideNums];
-                    newN[idx] = digit;
-                    setSideNums(newN);
-                }
+                const cIdx = topNums.indexOf(tDigit);
+                const rIdx = sideNums.indexOf(sDigit);
+                
+                if (cIdx === -1 || rIdx === -1) return "Error";
+                return { name: grid[rIdx][cIdx] || "Open", top: tDigit, side: sDigit };
             };
 
-            const shuffle = () => {
-                if(!confirm("Randomize grid numbers?")) return;
-                const r = a => [...a].sort(()=>Math.random()-0.5);
-                setTopNums(r([0,1,2,3,4,5,6,7,8,9]));
-                setSideNums(r([0,1,2,3,4,5,6,7,8,9]));
+            const updateScore = (q, team, val) => {
+                setScores(prev => ({
+                    ...prev,
+                    [q]: { ...prev[q], [team]: val }
+                }));
             };
+
+            const q1Win = getWinner('q1');
+            const q2Win = getWinner('q2');
+            const q3Win = getWinner('q3');
+            const finalWin = getWinner('final');
+
+            // Find highlighted cells (active winners)
+            const activeWinners = [];
+            if (q1Win) activeWinners.push(`${q1Win.side}-${q1Win.top}`);
+            if (q2Win) activeWinners.push(`${q2Win.side}-${q2Win.top}`);
+            if (q3Win) activeWinners.push(`${q3Win.side}-${q3Win.top}`);
+            if (finalWin) activeWinners.push(`${finalWin.side}-${finalWin.top}`);
 
             return (
-                <div className="min-h-screen bg-gray-100 pb-10">
+                <div className="min-h-screen bg-gray-100 font-sans">
+                    <Countdown />
                     
-                    {/* --- NAV BAR --- */}
-                    <nav className="bg-black text-white sticky top-0 z-50 shadow-lg border-b-4 border-[var(--brand-red)]">
-                        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+                        <div className="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                                <div className="bg-[var(--brand-red)] px-2 py-1 font-bold text-xl italic tracking-tighter">POOL</div>
-                                <div className="text-xs leading-tight text-gray-400 font-medium">
-                                    SUPER BOWL<br/>2026
-                                </div>
-                            </div>
-                            <div className="flex gap-4 text-sm font-bold brand-font tracking-wide">
-                                <button onClick={()=>setActiveTab('grid')} className={`${activeTab==='grid' ? 'text-[var(--brand-red)]' : 'text-gray-400'}`}>GRID</button>
-                                <button onClick={()=>setActiveTab('payouts')} className={`${activeTab==='payouts' ? 'text-[var(--brand-red)]' : 'text-gray-400'}`}>PAYOUTS</button>
-                            </div>
-                        </div>
-                    </nav>
-
-                    <div className="max-w-4xl mx-auto">
-                        
-                        {/* --- SCOREBOARD --- */}
-                        <div className="bg-white p-4 shadow-sm mb-1">
-                            <div className="flex items-center justify-between gap-4">
-                                {/* Pats */}
-                                <div className="flex-1 text-center">
-                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{TEAMS.top.name}</div>
-                                    <input 
-                                        type="number" 
-                                        pattern="[0-9]*"
-                                        value={score.top} 
-                                        onChange={(e) => setScore({...score, top: parseInt(e.target.value) || 0})}
-                                        className="w-full bg-gray-50 text-4xl font-black text-center py-2 rounded border border-gray-200 focus:border-[var(--brand-red)] focus:ring-0 outline-none transition-colors"
-                                    />
-                                </div>
-                                
-                                <div className="text-gray-300 font-light text-3xl pb-6">:</div>
-
-                                {/* Seahawks */}
-                                <div className="flex-1 text-center">
-                                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{TEAMS.side.name}</div>
-                                    <input 
-                                        type="number" 
-                                        pattern="[0-9]*"
-                                        value={score.side} 
-                                        onChange={(e) => setScore({...score, side: parseInt(e.target.value) || 0})}
-                                        className="w-full bg-gray-50 text-4xl font-black text-center py-2 rounded border border-gray-200 focus:border-[var(--brand-red)] focus:ring-0 outline-none transition-colors"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Current Winner Banner */}
-                            <div className="mt-4 bg-black text-white rounded p-3 flex items-center justify-between relative overflow-hidden">
-                                <div className="absolute left-0 top-0 w-1 h-full bg-[var(--brand-red)]"></div>
+                                <div className="h-8 w-8 bg-blue-900 text-white flex items-center justify-center font-bold text-xs rounded">SB</div>
                                 <div>
-                                    <div className="text-[10px] text-gray-400 uppercase tracking-widest">Winning Square</div>
-                                    <div className="text-xl font-bold brand-font leading-none tracking-wide text-yellow-400 truncate max-w-[200px]">
-                                        {winnerName}
-                                    </div>
+                                    <h1 className="text-lg font-bold leading-none teko text-gray-800">Super Bowl 2026</h1>
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wide">Pool Manager</p>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-[10px] text-gray-400 uppercase">Grid #</div>
-                                    <div className="font-mono text-sm font-bold">
-                                        <span className="text-green-400">{winSideDigit}</span> - <span className="text-blue-400">{winTopDigit}</span>
-                                    </div>
-                                </div>
+                            </div>
+                            <button onClick={()=>setIsEditing(!isEditing)} className="text-xs font-bold text-blue-600 border border-blue-600 px-3 py-1 rounded hover:bg-blue-50">
+                                {isEditing ? 'DONE' : 'EDIT'}
+                            </button>
+                        </div>
+                    </header>
+
+                    <div className="max-w-md mx-auto p-4 space-y-4">
+                        
+                        {/* Score Inputs */}
+                        <div className="bg-white rounded shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="bg-gray-800 text-white text-xs font-bold px-3 py-1 uppercase tracking-widest flex justify-between">
+                                <span>Scoreboard</span>
+                                <span className="text-gray-400">Live Updates</span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 p-2">
+                                <ScoreInput label="1st Qtr" scores={scores} quarter="q1" setScore={updateScore} />
+                                <ScoreInput label="2nd Qtr" scores={scores} quarter="q2" setScore={updateScore} />
+                                <ScoreInput label="3rd Qtr" scores={scores} quarter="q3" setScore={updateScore} />
+                                <ScoreInput label="Final" scores={scores} quarter="final" setScore={updateScore} />
                             </div>
                         </div>
 
-                        {/* --- MAIN CONTENT --- */}
-                        {activeTab === 'payouts' ? (
-                            <div className="p-4 bg-white min-h-[50vh] animate-in fade-in">
-                                <h2 className="text-xl font-bold mb-4">Prize Pool</h2>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between p-3 bg-gray-50 rounded border-l-4 border-gray-300">
-                                        <span className="font-bold">1st Quarter</span>
-                                        <span className="font-mono font-bold text-[var(--brand-red)]">$150</span>
-                                    </div>
-                                    <div className="flex justify-between p-3 bg-gray-50 rounded border-l-4 border-gray-300">
-                                        <span className="font-bold">Halftime</span>
-                                        <span className="font-mono font-bold text-[var(--brand-red)]">$200</span>
-                                    </div>
-                                    <div className="flex justify-between p-3 bg-gray-50 rounded border-l-4 border-gray-300">
-                                        <span className="font-bold">3rd Quarter</span>
-                                        <span className="font-mono font-bold text-[var(--brand-red)]">$200</span>
-                                    </div>
-                                    <div className="flex justify-between p-4 bg-black text-white rounded border-l-4 border-[var(--brand-red)] shadow-lg">
-                                        <span className="font-bold uppercase tracking-widest">Final Score</span>
-                                        <span className="font-mono font-bold text-yellow-400 text-lg">$400</span>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="bg-white pb-4">
-                                {/* Toolbar */}
-                                <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 flex justify-between items-center text-xs">
-                                    <div className="text-gray-500 font-bold uppercase">Game Grid</div>
-                                    <div className="flex gap-2">
-                                        <button onClick={shuffle} className="px-3 py-1 bg-white border border-gray-300 rounded shadow-sm font-bold text-gray-600 hover:text-black">
-                                            SHUFFLE #
-                                        </button>
-                                        <button onClick={()=>setIsEditing(!isEditing)} className={`px-3 py-1 border rounded shadow-sm font-bold ${isEditing ? 'bg-[var(--brand-red)] text-white border-[var(--brand-red)]' : 'bg-white border-gray-300 text-gray-600'}`}>
-                                            {isEditing ? 'DONE' : 'EDIT'}
-                                        </button>
-                                    </div>
-                                </div>
+                        {/* Winners List */}
+                        <div className="grid grid-cols-1 gap-2">
+                            <WinnerCard title="1st Quarter" amount="150" winner={q1Win?.name} grid={q1Win} />
+                            <WinnerCard title="2nd Quarter" amount="200" winner={q2Win?.name} grid={q2Win} />
+                            <WinnerCard title="3rd Quarter" amount="200" winner={q3Win?.name} grid={q3Win} />
+                            <WinnerCard title="Final Score" amount="400" winner={finalWin?.name} grid={finalWin} />
+                        </div>
 
-                                {/* THE GRID */}
-                                <div className="grid-container w-full">
-                                    
-                                    {/* 0,0 Corner */}
-                                    <div className="grid-corner flex flex-col items-center justify-center p-1 text-[8px] leading-tight font-mono text-gray-400">
-                                        <div>SEA</div>
-                                        <div>▼</div>
-                                    </div>
-
-                                    {/* Top Headers (Patriots) */}
-                                    {topNums.map((n, i) => (
-                                        <div key={`th-${i}`} className={`grid-header-top flex items-center justify-center h-10 font-bold text-lg border-r border-gray-800 relative ${n === winTopDigit ? 'bg-blue-900' : ''}`}>
-                                            {isEditing ? (
-                                                <input type="number" className="w-full h-full bg-transparent text-center text-white outline-none" value={n} onChange={(e)=>updateHeader('top', i, e.target.value)} />
-                                            ) : (
-                                                <span>{n}</span>
-                                            )}
-                                            {/* Top Label (only visible on first scroll but useful context) */}
-                                            {i === 4 && <div className="absolute -top-6 w-40 text-center text-[10px] text-gray-500 uppercase font-bold tracking-widest pointer-events-none">Patriots →</div>}
-                                        </div>
-                                    ))}
-
-                                    {/* Rows */}
-                                    {sideNums.map((sideN, rIdx) => (
-                                        <React.Fragment key={`row-${rIdx}`}>
-                                            
-                                            {/* Side Header (Seahawks) */}
-                                            <div className={`grid-header-left flex items-center justify-center font-bold text-lg border-b border-gray-800 ${sideN === winSideDigit ? 'bg-green-900' : ''}`}>
-                                                {isEditing ? (
-                                                    <input type="number" className="w-full h-full bg-transparent text-center text-white outline-none" value={sideN} onChange={(e)=>updateHeader('side', rIdx, e.target.value)} />
-                                                ) : (
-                                                    <span>{sideN}</span>
-                                                )}
-                                            </div>
-
-                                            {/* Cells */}
-                                            {topNums.map((topN, cIdx) => {
-                                                const isWinner = (sideN === winSideDigit && topN === winTopDigit);
-                                                const cellValue = grid[rIdx][cIdx];
-                                                
-                                                return (
-                                                    <div 
-                                                        key={`${rIdx}-${cIdx}`} 
-                                                        className={`
-                                                            h-14 border-r border-b border-gray-200 flex items-center justify-center p-1 text-center relative
-                                                            ${isWinner ? 'winner-cell bg-yellow-300 font-bold text-black' : 'bg-white text-gray-600'}
-                                                        `}
-                                                    >
-                                                        {isEditing ? (
-                                                            <input 
-                                                                type="text" 
-                                                                className="w-full h-full text-center text-xs bg-gray-50 focus:bg-white focus:ring-1 focus:ring-[var(--brand-red)] outline-none rounded"
-                                                                value={cellValue}
-                                                                onChange={(e) => updateGrid(rIdx, cIdx, e.target.value)}
-                                                            />
-                                                        ) : (
-                                                            <span className="text-[11px] font-medium leading-none break-words w-full overflow-hidden line-clamp-2">
-                                                                {cellValue}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </React.Fragment>
-                                    ))}
-                                </div>
+                        {/* THE GRID */}
+                        <div className="bg-white shadow-lg rounded overflow-hidden border border-gray-300">
+                            <div className="grid-wrapper text-sm">
                                 
-                                <div className="p-4 text-center text-xs text-gray-400 uppercase tracking-wide">
-                                    Scroll for more • Top: Patriots • Left: Seahawks
+                                {/* 0. Corner Block */}
+                                <div className="corner-block">
+                                    <div className="text-center">
+                                        <div className="text-[var(--hawks-green)]">SEA</div>
+                                        <div className="text-[var(--pats-red)]">NE</div>
+                                    </div>
                                 </div>
+
+                                {/* 1. Patriots Header */}
+                                <div className="header-team-top">
+                                    <span className="tracking-widest">NEW ENGLAND PATRIOTS</span>
+                                </div>
+
+                                {/* 2. Top Numbers */}
+                                {topNums.map((n, i) => (
+                                    <div key={`tn-${i}`} className="header-nums-top" style={{ gridColumn: i + 3 }}>
+                                        {isEditing ? <input className="w-full text-center outline-none" value={n} onChange={(e)=>{
+                                            const arr=[...topNums]; arr[i]=parseInt(e.target.value)||0; setTopNums(arr);
+                                        }}/> : n}
+                                    </div>
+                                ))}
+
+                                {/* 3. Seahawks Header */}
+                                <div className="header-team-left">
+                                    <span className="tracking-widest">SEATTLE SEAHAWKS</span>
+                                </div>
+
+                                {/* 4. Rows (Side Num + Cells) */}
+                                {sideNums.map((sNum, rIdx) => (
+                                    <React.Fragment key={`row-${rIdx}`}>
+                                        
+                                        {/* Side Number */}
+                                        <div className="header-nums-left" style={{ gridRow: rIdx + 3 }}>
+                                            {isEditing ? <input className="w-full text-center outline-none" value={sNum} onChange={(e)=>{
+                                                const arr=[...sideNums]; arr[rIdx]=parseInt(e.target.value)||0; setSideNums(arr);
+                                            }}/> : sNum}
+                                        </div>
+
+                                        {/* Grid Cells */}
+                                        {topNums.map((tNum, cIdx) => {
+                                            const isWinningCell = activeWinners.includes(`${sNum}-${tNum}`);
+                                            
+                                            return (
+                                                <div 
+                                                    key={`${rIdx}-${cIdx}`}
+                                                    className={`
+                                                        border-b border-r border-gray-200 flex items-center justify-center p-1 text-center min-h-[50px]
+                                                        ${isWinningCell ? 'winner-cell' : 'bg-white text-gray-700'}
+                                                    `}
+                                                    style={{ gridRow: rIdx + 3, gridColumn: cIdx + 3 }}
+                                                >
+                                                    {isEditing ? (
+                                                        <input 
+                                                            className="w-full text-center text-xs outline-none bg-gray-50" 
+                                                            value={grid[rIdx][cIdx]} 
+                                                            onChange={(e)=>{
+                                                                const g=[...grid]; g[rIdx][cIdx]=e.target.value; setGrid(g);
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <span className="leading-tight text-[11px] break-words w-full">
+                                                            {grid[rIdx][cIdx]}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                    </React.Fragment>
+                                ))}
+
                             </div>
-                        )}
+                            <div className="p-2 bg-gray-50 text-[10px] text-gray-400 text-center uppercase">
+                                Scroll Up/Down/Left/Right to view full grid
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             );
@@ -359,3 +424,5 @@
     </script>
 </body>
 </html>
+
+
