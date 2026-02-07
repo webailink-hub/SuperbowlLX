@@ -1,345 +1,422 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Trophy, Edit2, Check, RefreshCw, DollarSign, Activity, Users, Lock, Unlock } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Bowl 2026 Pool - Patriots vs Seahawks</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom scrollbar for the grid container */
+        .grid-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .grid-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .grid-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .grid-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-slate-800 font-sans">
 
-// --- Constants & Config ---
-const TEAMS = {
-  top: { name: 'New England Patriots', color: 'bg-blue-900', text: 'text-white', secondary: 'border-red-600' },
-  side: { name: 'Seattle Seahawks', color: 'bg-green-600', text: 'text-white', secondary: 'border-blue-900' }
-};
-
-const PAYOUTS = {
-  q1: 150,
-  q2: 200,
-  q3: 200,
-  q4: 400
-};
-
-// Initial data transcribed from the image
-// Row-major order (10 rows of 10 cols)
-// Empty strings used where handwriting was illegible or blank
-const INITIAL_GRID_DATA = [
-  // Row 0
-  ['Janette', 'Gary', 'Vince', 'Franco', 'Rick', 'Barajas', '', 'Janette', 'Franco', ''],
-  // Row 1
-  ['Peter K', '', 'Lalo', '', 'Tia', 'Gigi', 'Connor T', 'Rick', 'Lalo', ''],
-  // Row 2
-  ['Janie', 'Janette', 'Cathy A', 'Chris Calv', 'JSH', 'Peter K', 'Nate', 'Gary', 'Lalo', ''],
-  // Row 3
-  ['Franco', '', 'Jenn Garcia', 'Jordan S', 'Barajas', 'Vargas', 'Andrew Mk', 'Fabian', '', 'Gigi'],
-  // Row 4
-  ['', '', 'Gigi', 'James', 'Connor T', 'Janette', 'Cathy A', '', 'Lalo', ''], // 10th is arrow
-  // Row 5
-  ['Barajas', 'Chris Calv', 'JSH', 'Fabian', 'Tank PM', '', 'Gary', 'Jordan S', '', 'Janie'],
-  // Row 6
-  ['Gigi', 'Tia', 'Franco', '', 'Vargas', 'Barajas', 'James', 'Chris Calv', 'Happy', ''],
-  // Row 7
-  ['Vince', 'Gary', '', 'Cathy A', 'Happy', 'Jordan S', 'Rick', 'Vargas', 'Jenn Garcia', 'Franco'],
-  // Row 8
-  ['Lalo', 'Connor T', 'Rick', 'Lalo', 'Barajas', 'Gigi', '', 'Peter K', '', 'Andrew'],
-  // Row 9
-  ['Fabian', 'Nate', '', 'Janette', '', '', 'Franco', '', '', 'Rick']
-];
-
-const INITIAL_NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-export default function App() {
-  // --- State ---
-  const [grid, setGrid] = useState(INITIAL_GRID_DATA);
-  const [topNumbers, setTopNumbers] = useState(INITIAL_NUMBERS); // Patriots Cols
-  const [sideNumbers, setSideNumbers] = useState(INITIAL_NUMBERS); // Seahawks Rows
-  const [isEditing, setIsEditing] = useState(false);
-  const [score, setScore] = useState({ top: 0, side: 0 }); // top: Pats, side: Seahawks
-  const [quarter, setQuarter] = useState(1);
-  
-  // Randomize numbers on mount (optional, or kept static 0-9)
-  useEffect(() => {
-    shuffleNumbers();
-  }, []);
-
-  const shuffleNumbers = () => {
-    const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
-    setTopNumbers(shuffle([...INITIAL_NUMBERS]));
-    setSideNumbers(shuffle([...INITIAL_NUMBERS]));
-  };
-
-  const handleNameChange = (rowIndex, colIndex, newName) => {
-    const newGrid = [...grid];
-    newGrid[rowIndex][colIndex] = newName;
-    setGrid(newGrid);
-  };
-
-  // --- Logic ---
-  
-  // Get the last digit of a score
-  const getLastDigit = (num) => Math.abs(num) % 10;
-
-  // Determine the winning square coordinates based on current score
-  const winningColIndex = topNumbers.indexOf(getLastDigit(score.top));
-  const winningRowIndex = sideNumbers.indexOf(getLastDigit(score.side));
-
-  // Calculate Probabilities / "In the Hunt"
-  const probabilities = useMemo(() => {
-    const scenarios = [
-      { label: 'Current Score', top: score.top, side: score.side, prob: 'Winning Now', color: 'text-green-600' },
-      { label: 'Pats +3 (FG)', top: score.top + 3, side: score.side, prob: 'High', color: 'text-blue-600' },
-      { label: 'Hawks +3 (FG)', top: score.top, side: score.side + 3, prob: 'High', color: 'text-blue-600' },
-      { label: 'Pats +7 (TD)', top: score.top + 7, side: score.side, prob: 'Medium', color: 'text-orange-600' },
-      { label: 'Hawks +7 (TD)', top: score.top, side: score.side + 7, prob: 'Medium', color: 'text-orange-600' },
-    ];
-
-    return scenarios.map(s => {
-      const cIdx = topNumbers.indexOf(getLastDigit(s.top));
-      const rIdx = sideNumbers.indexOf(getLastDigit(s.side));
-      const owner = grid[rIdx]?.[cIdx] || 'Open';
-      return { ...s, owner, rIdx, cIdx };
-    });
-  }, [score, topNumbers, sideNumbers, grid]);
-
-  return (
-    <div className="min-h-screen bg-gray-50 text-slate-800 font-sans">
-      
-      {/* --- Navbar --- */}
-      <nav className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Trophy className="text-yellow-400 w-8 h-8" />
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">Super Bowl 2026 Pool</h1>
-              <p className="text-xs text-slate-400">Patriots vs Seahawks</p>
+    <!-- Navbar -->
+    <nav class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-trophy text-yellow-400 text-2xl"></i>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Super Bowl 2026 Pool</h1>
+                    <p class="text-xs text-slate-400">Patriots vs Seahawks</p>
+                </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-6 text-sm font-medium">
-             <div className="flex flex-col items-center">
-                <span className="text-slate-400 text-xs uppercase">Pot Size</span>
-                <span className="text-green-400 font-bold text-lg">$1,000</span>
-             </div>
-             <div className="hidden md:block h-8 w-px bg-slate-700"></div>
-             <div className="flex gap-4">
-               <div>Q1: <span className="text-white">${PAYOUTS.q1}</span></div>
-               <div>Q2: <span className="text-white">${PAYOUTS.q2}</span></div>
-               <div>Q3: <span className="text-white">${PAYOUTS.q3}</span></div>
-               <div>Q4: <span className="text-white">${PAYOUTS.q4}</span></div>
-             </div>
-          </div>
+            
+            <div class="flex items-center gap-6 text-sm font-medium">
+                <div class="flex flex-col items-center">
+                    <span class="text-slate-400 text-xs uppercase">Pot Size</span>
+                    <span class="text-green-400 font-bold text-lg">$1,000</span>
+                </div>
+                <div class="hidden md:block h-8 w-px bg-slate-700"></div>
+                <div class="flex gap-4 text-xs md:text-sm">
+                    <div>Q1: <span class="text-white">$150</span></div>
+                    <div>Q2: <span class="text-white">$200</span></div>
+                    <div>Q3: <span class="text-white">$200</span></div>
+                    <div>Q4: <span class="text-white">$400</span></div>
+                </div>
+            </div>
         </div>
-      </nav>
+    </nav>
 
-      <main className="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* --- Left Column: Game Control & Probabilities --- */}
-        <div className="lg:col-span-3 space-y-6">
-          
-          {/* Game Status Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-slate-500" />
-              <h2 className="font-semibold text-sm uppercase tracking-wide text-slate-700">Live Game Control</h2>
-            </div>
+        <!-- Left Column: Controls -->
+        <div class="lg:col-span-3 space-y-6">
             
-            <div className="p-4 space-y-6">
-              {/* Score Inputs */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-blue-900 uppercase">Patriots</label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={score.top}
-                    onChange={(e) => setScore({...score, top: parseInt(e.target.value) || 0})}
-                    className="w-full text-center text-3xl font-bold border-2 border-slate-200 rounded-lg p-2 focus:border-blue-900 focus:outline-none transition-colors"
-                  />
+            <!-- Game Status -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
+                    <i class="fas fa-chart-line text-slate-500"></i>
+                    <h2 class="font-semibold text-sm uppercase tracking-wide text-slate-700">Live Game Control</h2>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-green-700 uppercase">Seahawks</label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={score.side}
-                    onChange={(e) => setScore({...score, side: parseInt(e.target.value) || 0})}
-                    className="w-full text-center text-3xl font-bold border-2 border-slate-200 rounded-lg p-2 focus:border-green-700 focus:outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Quarter Selector */}
-              <div>
-                <label className="text-xs font-semibold text-slate-500 mb-2 block">Current Quarter</label>
-                <div className="flex bg-slate-100 rounded-lg p-1">
-                  {[1, 2, 3, 4].map(q => (
-                    <button
-                      key={q}
-                      onClick={() => setQuarter(q)}
-                      className={`flex-1 py-1 text-sm font-medium rounded-md transition-all ${quarter === q ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                      Q{q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Current Winner Big Display */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                 <div className="text-xs text-yellow-700 font-semibold uppercase mb-1">Current Winning Square</div>
-                 <div className="text-2xl font-black text-slate-900 truncate">
-                   {probabilities[0].owner || "Open"}
-                 </div>
-                 <div className="text-xs text-slate-500 mt-1">
-                   Grid: {getLastDigit(score.side)} (Sea) - {getLastDigit(score.top)} (Pat)
-                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Probability List */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-             <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-slate-500" />
-              <h2 className="font-semibold text-sm uppercase tracking-wide text-slate-700">Top Probabilities</h2>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {probabilities.slice(1).map((prob, idx) => (
-                <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                  <div>
-                    <div className="font-bold text-slate-800">{prob.owner || "Open"}</div>
-                    <div className="text-xs text-slate-500">{prob.label}</div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full bg-opacity-10 ${prob.color.replace('text', 'bg')} ${prob.color}`}>
-                      {getLastDigit(prob.side)} - {getLastDigit(prob.top)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Admin Tools */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
-             <div className="text-xs font-bold text-slate-400 uppercase">Admin Tools</div>
-             <button 
-                onClick={() => setIsEditing(!isEditing)}
-                className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${isEditing ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-             >
-               {isEditing ? <><Check className="w-4 h-4" /> Done Editing</> : <><Edit2 className="w-4 h-4" /> Edit Names</>}
-             </button>
-             <button 
-                onClick={shuffleNumbers}
-                className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-             >
-               <RefreshCw className="w-4 h-4" /> Shuffle Numbers
-             </button>
-          </div>
-
-        </div>
-
-        {/* --- Right Column: The Grid --- */}
-        <div className="lg:col-span-9 overflow-x-auto">
-          <div className="min-w-[800px] border-2 border-slate-800 rounded-lg overflow-hidden bg-white shadow-xl">
-            
-            {/* Top Team Header */}
-            <div className="grid grid-cols-11">
-               <div className="bg-slate-800 p-2 flex items-center justify-center border-r border-b border-slate-700">
-                  <span className="text-slate-500 text-xs font-mono">SEA\PAT</span>
-               </div>
-               <div className={`col-span-10 ${TEAMS.top.color} text-white py-3 text-center font-bold tracking-wider uppercase border-b-2 border-white relative`}>
-                 {TEAMS.top.name}
-                 <div className="absolute top-0 right-0 h-full flex items-center px-4 text-xs opacity-75 font-normal normal-case">
-                   Last Digit of Score
-                 </div>
-               </div>
-            </div>
-
-            {/* Top Numbers Row */}
-            <div className="grid grid-cols-11">
-               {/* Corner Spacer */}
-               <div className={`border-r border-b border-slate-300 bg-slate-100 flex items-center justify-center font-bold text-slate-400`}>
-                 #
-               </div>
-               {/* Numbers */}
-               {topNumbers.map((num, i) => (
-                 <div key={`top-${i}`} className={`h-10 flex items-center justify-center font-black text-lg border-r border-b border-slate-200 bg-slate-50 text-slate-700 ${getLastDigit(score.top) === num ? 'bg-blue-100 text-blue-800' : ''}`}>
-                   {num}
-                 </div>
-               ))}
-            </div>
-
-            {/* Main Grid Body */}
-            <div className="flex">
-               {/* Side Team Header & Numbers */}
-               <div className="w-[9.09%] flex flex-col">
-                  {/* Side Numbers */}
-                  {sideNumbers.map((num, i) => (
-                    <div key={`side-${i}`} className="flex flex-1">
-                       {/* Team Name Vertical (only on first item, strictly CSS trickery or absolute) - simplified here */}
-                       
-                       <div className={`w-full h-16 flex items-center justify-center font-black text-lg border-r border-b border-slate-200 bg-slate-50 text-slate-700 relative ${getLastDigit(score.side) === num ? 'bg-green-100 text-green-800' : ''}`}>
-                          {num}
-                          {/* Vertical Label approximation */}
-                          {i === 4 && (
-                            <div className={`absolute -left-12 top-1/2 -translate-y-1/2 -rotate-90 w-64 text-center font-bold text-sm tracking-widest text-white px-2 py-1 rounded ${TEAMS.side.color}`}>
-                              {TEAMS.side.name}
-                            </div>
-                          )}
-                       </div>
+                
+                <div class="p-4 space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-blue-900 uppercase">Patriots</label>
+                            <input type="number" id="scoreTop" min="0" value="0" class="w-full text-center text-3xl font-bold border-2 border-slate-200 rounded-lg p-2 focus:border-blue-900 focus:outline-none transition-colors">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-green-700 uppercase">Seahawks</label>
+                            <input type="number" id="scoreSide" min="0" value="0" class="w-full text-center text-3xl font-bold border-2 border-slate-200 rounded-lg p-2 focus:border-green-700 focus:outline-none transition-colors">
+                        </div>
                     </div>
-                  ))}
-               </div>
 
-               {/* The 100 Squares */}
-               <div className="flex-1 grid grid-cols-10 grid-rows-10">
-                 {grid.map((row, rIdx) => (
-                   row.map((cellName, cIdx) => {
-                     const isWinner = rIdx === winningRowIndex && cIdx === winningColIndex;
-                     
-                     // Check if this square is a "Close Probable" (e.g. +3 or +7)
-                     const topNum = topNumbers[cIdx];
-                     const sideNum = sideNumbers[rIdx];
-                     const isProjected = probabilities.some(p => getLastDigit(p.top) === topNum && getLastDigit(p.side) === sideNum && p.label !== 'Current Score');
+                    <!-- Quarters -->
+                    <div>
+                        <label class="text-xs font-semibold text-slate-500 mb-2 block">Current Quarter</label>
+                        <div class="flex bg-slate-100 rounded-lg p-1" id="quarterContainer">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
 
-                     return (
-                       <div 
-                         key={`${rIdx}-${cIdx}`} 
-                         className={`
-                           relative h-16 border-r border-b border-slate-200 flex items-center justify-center text-center px-1
-                           transition-all duration-300
-                           ${isWinner ? 'bg-yellow-300 shadow-inner z-10 ring-2 ring-yellow-500 ring-inset' : 
-                             isProjected ? 'bg-blue-50' : 'bg-white hover:bg-slate-50'}
-                         `}
-                       >
-                         {isEditing ? (
-                           <input 
-                             type="text" 
-                             value={cellName} 
-                             onChange={(e) => handleNameChange(rIdx, cIdx, e.target.value)}
-                             className="w-full h-full text-center bg-transparent focus:outline-none text-xs"
-                             placeholder="Empty"
-                           />
-                         ) : (
-                           <span className={`text-xs md:text-sm font-medium leading-tight break-words overflow-hidden ${isWinner ? 'font-bold text-slate-900 scale-110' : 'text-slate-600'}`}>
-                             {cellName || "-"}
-                           </span>
-                         )}
-                         
-                         {/* Winner Badge */}
-                         {isWinner && (
-                           <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-bounce">
-                             WIN
-                           </div>
-                         )}
-                       </div>
-                     );
-                   })
-                 ))}
-               </div>
+                    <!-- Winner Display -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                        <div class="text-xs text-yellow-700 font-semibold uppercase mb-1">Current Winning Square</div>
+                        <div id="currentWinnerName" class="text-2xl font-black text-slate-900 truncate">Loading...</div>
+                        <div id="currentWinnerCoords" class="text-xs text-slate-500 mt-1">Grid: -</div>
+                    </div>
+                </div>
             </div>
-          </div>
-          
-          <div className="mt-4 text-center text-slate-400 text-sm">
-             Grid coordinates represent the last digit of each team's score.
-          </div>
+
+            <!-- Probabilities -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
+                    <i class="fas fa-calculator text-slate-500"></i>
+                    <h2 class="font-semibold text-sm uppercase tracking-wide text-slate-700">Top Probabilities</h2>
+                </div>
+                <div id="probabilitiesList" class="divide-y divide-slate-100">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+
+            <!-- Admin Tools -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 space-y-3">
+                <div class="text-xs font-bold text-slate-400 uppercase">Admin Tools</div>
+                <button id="toggleEditBtn" class="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    <i class="fas fa-edit"></i> Edit Names
+                </button>
+                <button id="shuffleBtn" class="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                    <i class="fas fa-sync"></i> Shuffle Numbers
+                </button>
+            </div>
+
         </div>
-      </main>
-    </div>
-  );
-}
+
+        <!-- Right Column: Grid -->
+        <div class="lg:col-span-9 overflow-x-auto grid-scroll">
+            <div class="min-w-[800px] border-2 border-slate-800 rounded-lg overflow-hidden bg-white shadow-xl">
+                
+                <!-- Top Team Header -->
+                <div class="grid grid-cols-11">
+                    <div class="bg-slate-800 p-2 flex items-center justify-center border-r border-b border-slate-700">
+                        <span class="text-slate-500 text-xs font-mono">SEA\PAT</span>
+                    </div>
+                    <div class="col-span-10 bg-blue-900 text-white py-3 text-center font-bold tracking-wider uppercase border-b-2 border-white relative">
+                        New England Patriots
+                        <div class="absolute top-0 right-0 h-full flex items-center px-4 text-xs opacity-75 font-normal normal-case">
+                            Last Digit of Score
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Numbers -->
+                <div id="topNumbersRow" class="grid grid-cols-11">
+                    <!-- Injected by JS -->
+                </div>
+
+                <!-- Main Grid Body -->
+                <div class="flex">
+                    <!-- Side Numbers Column -->
+                    <div id="sideNumbersCol" class="w-[9.09%] flex flex-col">
+                        <!-- Injected by JS -->
+                    </div>
+
+                    <!-- The 100 Squares -->
+                    <div id="gridContainer" class="flex-1 grid grid-cols-10 grid-rows-10">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-slate-400 text-sm">
+                Grid coordinates represent the last digit of each team's score.
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- State Management ---
+        const TEAMS = {
+            top: { name: 'New England Patriots', color: 'bg-blue-900', text: 'text-white' },
+            side: { name: 'Seattle Seahawks', color: 'bg-green-600', text: 'text-white' }
+        };
+
+        let state = {
+            grid: [
+                ['Janette', 'Gary', 'Vince', 'Franco', 'Rick', 'Barajas', '', 'Janette', 'Franco', ''],
+                ['Peter K', '', 'Lalo', '', 'Tia', 'Gigi', 'Connor T', 'Rick', 'Lalo', ''],
+                ['Janie', 'Janette', 'Cathy A', 'Chris Calv', 'JSH', 'Peter K', 'Nate', 'Gary', 'Lalo', ''],
+                ['Franco', '', 'Jenn Garcia', 'Jordan S', 'Barajas', 'Vargas', 'Andrew Mk', 'Fabian', '', 'Gigi'],
+                ['', '', 'Gigi', 'James', 'Connor T', 'Janette', 'Cathy A', '', 'Lalo', ''],
+                ['Barajas', 'Chris Calv', 'JSH', 'Fabian', 'Tank PM', '', 'Gary', 'Jordan S', '', 'Janie'],
+                ['Gigi', 'Tia', 'Franco', '', 'Vargas', 'Barajas', 'James', 'Chris Calv', 'Happy', ''],
+                ['Vince', 'Gary', '', 'Cathy A', 'Happy', 'Jordan S', 'Rick', 'Vargas', 'Jenn Garcia', 'Franco'],
+                ['Lalo', 'Connor T', 'Rick', 'Lalo', 'Barajas', 'Gigi', '', 'Peter K', '', 'Andrew'],
+                ['Fabian', 'Nate', '', 'Janette', '', '', 'Franco', '', '', 'Rick']
+            ],
+            topNumbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            sideNumbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            isEditing: false,
+            score: { top: 0, side: 0 },
+            quarter: 1
+        };
+
+        // --- Logic & Helpers ---
+        
+        function getLastDigit(num) {
+            return Math.abs(num) % 10;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function getWinningCoords() {
+            const topDigit = getLastDigit(state.score.top);
+            const sideDigit = getLastDigit(state.score.side);
+            return {
+                colIdx: state.topNumbers.indexOf(topDigit),
+                rowIdx: state.sideNumbers.indexOf(sideDigit),
+                topDigit,
+                sideDigit
+            };
+        }
+
+        function calculateProbabilities() {
+            const scenarios = [
+                { label: 'Current Score', top: state.score.top, side: state.score.side, prob: 'Winning Now', color: 'text-green-600', bg: 'bg-green-100' },
+                { label: 'Pats +3 (FG)', top: state.score.top + 3, side: state.score.side, prob: 'High', color: 'text-blue-600', bg: 'bg-blue-100' },
+                { label: 'Hawks +3 (FG)', top: state.score.top, side: state.score.side + 3, prob: 'High', color: 'text-blue-600', bg: 'bg-blue-100' },
+                { label: 'Pats +7 (TD)', top: state.score.top + 7, side: state.score.side, prob: 'Medium', color: 'text-orange-600', bg: 'bg-orange-100' },
+                { label: 'Hawks +7 (TD)', top: state.score.top, side: state.score.side + 7, prob: 'Medium', color: 'text-orange-600', bg: 'bg-orange-100' },
+            ];
+
+            return scenarios.map(s => {
+                const topD = getLastDigit(s.top);
+                const sideD = getLastDigit(s.side);
+                const cIdx = state.topNumbers.indexOf(topD);
+                const rIdx = state.sideNumbers.indexOf(sideD);
+                const owner = (state.grid[rIdx] && state.grid[rIdx][cIdx]) ? state.grid[rIdx][cIdx] : 'Open';
+                return { ...s, owner, rIdx, cIdx, topD, sideD };
+            });
+        }
+
+        // --- Render Functions ---
+
+        function renderTopNumbers() {
+            const container = document.getElementById('topNumbersRow');
+            const topDigit = getLastDigit(state.score.top);
+            
+            let html = `<div class="border-r border-b border-slate-300 bg-slate-100 flex items-center justify-center font-bold text-slate-400">#</div>`;
+            
+            state.topNumbers.forEach(num => {
+                const isActive = num === topDigit;
+                html += `
+                    <div class="h-10 flex items-center justify-center font-black text-lg border-r border-b border-slate-200 
+                    ${isActive ? 'bg-blue-100 text-blue-800' : 'bg-slate-50 text-slate-700'}">
+                        ${num}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderSideNumbers() {
+            const container = document.getElementById('sideNumbersCol');
+            const sideDigit = getLastDigit(state.score.side);
+
+            let html = '';
+            state.sideNumbers.forEach((num, i) => {
+                const isActive = num === sideDigit;
+                const label = i === 4 ? `<div class="absolute -left-12 top-1/2 -translate-y-1/2 -rotate-90 w-64 text-center font-bold text-sm tracking-widest text-white px-2 py-1 rounded bg-green-600">SEATTLE SEAHAWKS</div>` : '';
+                
+                html += `
+                    <div class="flex flex-1">
+                        <div class="w-full h-16 flex items-center justify-center font-black text-lg border-r border-b border-slate-200 relative
+                        ${isActive ? 'bg-green-100 text-green-800' : 'bg-slate-50 text-slate-700'}">
+                            ${num}
+                            ${label}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('gridContainer');
+            const win = getWinningCoords();
+            const probs = calculateProbabilities();
+            
+            let html = '';
+
+            state.grid.forEach((row, rIdx) => {
+                row.forEach((cellName, cIdx) => {
+                    const isWinner = rIdx === win.rowIdx && cIdx === win.colIdx;
+                    
+                    // Check if probable
+                    const topNum = state.topNumbers[cIdx];
+                    const sideNum = state.sideNumbers[rIdx];
+                    const isProjected = probs.some(p => p.topD === topNum && p.sideD === sideNum && p.label !== 'Current Score');
+
+                    let cellContent = '';
+                    if (state.isEditing) {
+                        cellContent = `<input type="text" value="${cellName}" 
+                            onchange="updateName(${rIdx}, ${cIdx}, this.value)"
+                            class="w-full h-full text-center bg-transparent focus:outline-none text-xs border-b border-dashed border-slate-300">`;
+                    } else {
+                        cellContent = `<span class="text-xs md:text-sm font-medium leading-tight break-words overflow-hidden ${isWinner ? 'font-bold text-slate-900 scale-110' : 'text-slate-600'}">${cellName || "-"}</span>`;
+                    }
+
+                    const badge = isWinner ? 
+                        `<div class="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-bounce z-20">WIN</div>` 
+                        : '';
+
+                    let bgClass = 'bg-white hover:bg-slate-50';
+                    if (isWinner) bgClass = 'bg-yellow-300 shadow-inner z-10 ring-2 ring-yellow-500 ring-inset';
+                    else if (isProjected) bgClass = 'bg-blue-50';
+
+                    html += `
+                        <div class="relative h-16 border-r border-b border-slate-200 flex items-center justify-center text-center px-1 transition-all duration-300 ${bgClass}">
+                            ${cellContent}
+                            ${badge}
+                        </div>
+                    `;
+                });
+            });
+            container.innerHTML = html;
+        }
+
+        function renderProbabilities() {
+            const container = document.getElementById('probabilitiesList');
+            const probs = calculateProbabilities();
+            
+            // Update Main Winner Display
+            const currentWinner = probs[0];
+            document.getElementById('currentWinnerName').textContent = currentWinner.owner || "Open";
+            document.getElementById('currentWinnerCoords').textContent = `Grid: ${currentWinner.sideD} (Sea) - ${currentWinner.topD} (Pat)`;
+
+            // Update List
+            let html = '';
+            probs.slice(1).forEach(p => {
+                html += `
+                    <div class="p-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <div>
+                            <div class="font-bold text-slate-800">${p.owner || "Open"}</div>
+                            <div class="text-xs text-slate-500">${p.label}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold px-2 py-1 rounded-full bg-opacity-10 ${p.bg} ${p.color}">
+                                ${p.sideD} - ${p.topD}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderQuarters() {
+            const container = document.getElementById('quarterContainer');
+            let html = '';
+            [1, 2, 3, 4].forEach(q => {
+                const isActive = state.quarter === q;
+                const cls = isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600';
+                html += `<button onclick="setQuarter(${q})" class="flex-1 py-1 text-sm font-medium rounded-md transition-all ${cls}">Q${q}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderAll() {
+            renderTopNumbers();
+            renderSideNumbers();
+            renderGrid();
+            renderProbabilities();
+            renderQuarters();
+            
+            // Update Admin Button Text
+            const editBtn = document.getElementById('toggleEditBtn');
+            if (state.isEditing) {
+                editBtn.innerHTML = '<i class="fas fa-check"></i> Done Editing';
+                editBtn.classList.add('bg-blue-100', 'text-blue-700');
+            } else {
+                editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit Names';
+                editBtn.classList.remove('bg-blue-100', 'text-blue-700');
+            }
+        }
+
+        // --- Events & Actions ---
+
+        function updateName(rIdx, cIdx, val) {
+            state.grid[rIdx][cIdx] = val;
+            // No full re-render needed for just data update, but safer to do it
+            // We won't re-render here to keep focus on input
+        }
+
+        function setQuarter(q) {
+            state.quarter = q;
+            renderQuarters();
+        }
+
+        document.getElementById('scoreTop').addEventListener('input', (e) => {
+            state.score.top = parseInt(e.target.value) || 0;
+            renderAll();
+        });
+
+        document.getElementById('scoreSide').addEventListener('input', (e) => {
+            state.score.side = parseInt(e.target.value) || 0;
+            renderAll();
+        });
+
+        document.getElementById('toggleEditBtn').addEventListener('click', () => {
+            state.isEditing = !state.isEditing;
+            renderAll();
+        });
+
+        document.getElementById('shuffleBtn').addEventListener('click', () => {
+            shuffleArray(state.topNumbers);
+            shuffleArray(state.sideNumbers);
+            renderAll();
+        });
+
+        // --- Initialization ---
+        
+        // Shuffle on load
+        shuffleArray(state.topNumbers);
+        shuffleArray(state.sideNumbers);
+        
+        // Initial Render
+        renderAll();
+
+    </script>
+</body>
+</html>
