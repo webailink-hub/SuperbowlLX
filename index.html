@@ -221,9 +221,6 @@
             const topNums = FINAL_TOP_NUMS;
             const sideNums = FINAL_SIDE_NUMS;
             
-            // "Live" Score State (for the big winner display)
-            const [liveScore, setLiveScore] = useState(() => load('sb_liveScore', { top: '', side: '' }));
-
             // Quarterly Scores State (for the record)
             const [scores, setScores] = useState(() => load('sb_scores', {
                 q1: { top: '', side: '' },
@@ -234,42 +231,17 @@
             
             // Persistence
             useEffect(() => save('sb_scores', scores), [scores]);
-            useEffect(() => save('sb_liveScore', liveScore), [liveScore]);
 
             function load(k, d) { try { return JSON.parse(localStorage.getItem(k)) || d; } catch { return d; } }
             function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
 
             // Logic
-            const getWinner = (s) => {
-                if (s.top === '' || s.side === '') return null;
-                const tDigit = Math.abs(parseInt(s.top) || 0) % 10;
-                const sDigit = Math.abs(parseInt(s.side) || 0) % 10;
-                
-                const cIdx = topNums.indexOf(tDigit);
-                const rIdx = sideNums.indexOf(sDigit);
-                
-                if (cIdx === -1 || rIdx === -1) return "Error";
-                return { name: grid[rIdx][cIdx] || "Open", top: tDigit, side: sDigit };
-            };
-
             const updateQuarterScore = (q, team, val) => {
                 setScores(prev => ({
                     ...prev,
                     [q]: { ...prev[q], [team]: val }
                 }));
             };
-
-            const updateLiveScore = (team, val) => {
-                setLiveScore(prev => ({ ...prev, [team]: val }));
-            };
-
-            const liveWinner = getWinner(liveScore);
-            const q1Win = getWinner(scores.q1);
-            const q2Win = getWinner(scores.q2);
-            const q3Win = getWinner(scores.q3);
-            const finalWin = getWinner(scores.final);
-
-            const activeHighlight = liveWinner ? `${liveWinner.side}-${liveWinner.top}` : null;
 
             return (
                 <div className="min-h-screen bg-slate-50 font-sans">
@@ -286,53 +258,7 @@
 
                     <div className="max-w-3xl mx-auto p-4 space-y-6">
                         
-                        {/* 1. CURRENT LIVE WINNER & SCORE SECTION */}
-                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden relative">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-900 via-green-600 to-blue-900"></div>
-                            
-                            {/* Live Score Inputs */}
-                            <div className="p-4 bg-slate-50 flex items-center justify-center gap-6 md:gap-12">
-                                <div className="text-center">
-                                    <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-1">Patriots</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="0"
-                                        value={liveScore.top}
-                                        onChange={(e) => updateLiveScore('top', e.target.value)}
-                                        className="w-20 h-16 md:w-24 md:h-20 text-center text-4xl md:text-5xl font-black bg-white border-2 border-gray-200 rounded-lg focus:border-blue-900 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-slate-800"
-                                    />
-                                </div>
-                                <div className="text-2xl font-black text-gray-300">VS</div>
-                                <div className="text-center">
-                                    <label className="block text-[10px] font-black text-[var(--hawks-green)] uppercase tracking-widest mb-1">Seahawks</label>
-                                    <input 
-                                        type="number" 
-                                        placeholder="0"
-                                        value={liveScore.side}
-                                        onChange={(e) => updateLiveScore('side', e.target.value)}
-                                        className="w-20 h-16 md:w-24 md:h-20 text-center text-4xl md:text-5xl font-black bg-white border-2 border-gray-200 rounded-lg focus:border-green-600 focus:ring-4 focus:ring-green-100 outline-none transition-all text-slate-800"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Prominent Winner Display */}
-                            <div className="bg-slate-900 text-white p-4 text-center">
-                                <div className="text-xs font-bold text-yellow-500 uppercase tracking-[0.2em] mb-1 animate-pulse">
-                                    Current Projected Winner
-                                </div>
-                                <div className="text-3xl md:text-4xl font-black uppercase tracking-tight truncate leading-tight">
-                                    {liveWinner ? liveWinner.name : <span className="text-slate-700">Waiting for Score...</span>}
-                                </div>
-                                {liveWinner && (
-                                    <div className="mt-2 inline-block px-3 py-1 bg-slate-800 rounded-full text-[10px] font-mono border border-slate-700">
-                                        Square: SEA {liveWinner.side} - NE {liveWinner.top}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-
-                        {/* 2. QUARTERLY SCOREBOARD */}
+                        {/* QUARTERLY SCOREBOARD */}
                         <div className="bg-black rounded-xl overflow-hidden shadow-md">
                             <div className="flex justify-between items-center px-4 py-2 bg-gray-900 border-b border-gray-800">
                                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Quarterly Payouts</span>
@@ -368,7 +294,7 @@
                         </div>
 
 
-                        {/* 3. THE GRID */}
+                        {/* THE GRID */}
                         <div className="bg-white shadow-xl rounded-lg overflow-hidden border border-slate-300">
                             <div className="grid-wrapper text-sm">
                                 
@@ -409,15 +335,10 @@
 
                                         {/* Grid Cells */}
                                         {topNums.map((tNum, cIdx) => {
-                                            const isActive = activeHighlight === `${sNum}-${tNum}`;
-                                            
                                             return (
                                                 <div 
                                                     key={`${rIdx}-${cIdx}`}
-                                                    className={`
-                                                        border-b border-r border-gray-200 flex items-center justify-center p-1 text-center
-                                                        ${isActive ? 'winner-cell' : 'bg-white text-slate-700'}
-                                                    `}
+                                                    className="border-b border-r border-gray-200 flex items-center justify-center p-1 text-center bg-white text-slate-700"
                                                     style={{ gridRow: rIdx + 3, gridColumn: cIdx + 3 }}
                                                 >
                                                     <span className="leading-tight text-xs md:text-sm font-medium break-words w-full px-0.5">
