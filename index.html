@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Updated viewport to allow zooming for better accessibility -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>SB 2026 Pool | Patriots vs Seahawks</title>
     
@@ -155,19 +154,24 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
-        // --- Mock Data ---
-        const INITIAL_GRID = [
-            ['Janette', 'Gary', 'Vince', 'Franco', 'Rick', 'Barajas', '', 'Janette', 'Franco', ''],
-            ['Peter K', '', 'Lalo', '', 'Tia', 'Gigi', 'Connor T', 'Rick', 'Lalo', ''],
-            ['Janie', 'Janette', 'Cathy A', 'Chris Calv', 'JSH', 'Peter K', 'Nate', 'Gary', 'Lalo', ''],
-            ['Franco', '', 'Jenn Garcia', 'Jordan S', 'Barajas', 'Vargas', 'Andrew Mk', 'Fabian', '', 'Gigi'],
-            ['', '', 'Gigi', 'James', 'Connor T', 'Janette', 'Cathy A', '', 'Lalo', ''],
-            ['Barajas', 'Chris Calv', 'JSH', 'Fabian', 'Tank PM', '', 'Gary', 'Jordan S', '', 'Janie'],
-            ['Gigi', 'Tia', 'Franco', '', 'Vargas', 'Barajas', 'James', 'Chris Calv', 'Happy', ''],
-            ['Vince', 'Gary', '', 'Cathy A', 'Happy', 'Jordan S', 'Rick', 'Vargas', 'Jenn Garcia', 'Franco'],
-            ['Lalo', 'Connor T', 'Rick', 'Lalo', 'Barajas', 'Gigi', '', 'Peter K', '', 'Andrew'],
-            ['Fabian', 'Nate', '', 'Janette', '', '', 'Franco', '', '', 'Rick']
+        // --- FINALIZED Data ---
+        // Names updated based on user request
+        const FINAL_GRID = [
+            ['Janette', 'PZ', 'Gary', 'Vince', 'Franco', 'Rick', 'Barajas', 'Ruth', 'Janette', 'Franco'],
+            ['Peter K', 'Tom', 'Nate', 'Lalo', 'Tom', 'Tia', 'Gigi', 'Connor T', 'Rick', 'Barajas'],
+            ['Janie', 'Janette', 'Cathy Q', 'Chris Calv', 'Ish', 'Peter K', 'Nate', 'Gary', 'Lalo', 'Ruth'],
+            ['Franco', 'Jenn*', 'Jenn Garcia', 'Jordan S.', 'Barajas', 'Vargas', 'Andrew/MK', 'Fabian', 'Jenn*', 'GIGI'],
+            ['Maryana/AG', 'Lance', 'GIGI', 'James', 'Connor T', 'Janette', 'Cathy Q', 'Franco', 'Lalo', 'Hay'],
+            ['Barajas', 'Chris Calu', 'ISH', 'Fabian', 'Tank PM', 'Lance', 'Gary', 'Jordan S', 'Tom', 'Janie'],
+            ['Gigi', 'Tia', 'Franco', 'Ray', 'Vargas', 'Barajas', 'James', 'Chris Calu', 'Happy', 'Ruth'],
+            ['Vince', 'Gary', 'Jenn*', 'Cathy Q', 'Happy', 'Jordan S', 'Rick', 'Vargas', 'Jenn Garcia', 'Franco'],
+            ['Lalo', 'Connor T', 'Rick', 'Lalo', 'Barajas', 'GIGI', 'Jenn*', 'Peter K', 'Tom', 'Andrew'],
+            ['Fabian', 'Nate', 'PZ', 'Janette', 'Tom', 'Ruth', 'Franco', 'PZ', 'PZ', 'Rick']
         ];
+        
+        // Finalized Random Numbers
+        const FINAL_TOP_NUMS = [9, 3, 7, 0, 5, 6, 1, 8, 2, 4]; // Patriots (Top)
+        const FINAL_SIDE_NUMS = [7, 1, 0, 6, 5, 9, 4, 2, 3, 8]; // Seahawks (Side)
 
         // --- Components ---
 
@@ -212,9 +216,10 @@
 
         function App() {
             // State
-            const [grid, setGrid] = useState(() => load('sb_grid', INITIAL_GRID));
-            const [topNums, setTopNums] = useState(() => load('sb_topNums', [0,1,2,3,4,5,6,7,8,9]));
-            const [sideNums, setSideNums] = useState(() => load('sb_sideNums', [0,1,2,3,4,5,6,7,8,9]));
+            // Grid and Nums are now static constants, no need for State for editing
+            const grid = FINAL_GRID;
+            const topNums = FINAL_TOP_NUMS;
+            const sideNums = FINAL_SIDE_NUMS;
             
             // "Live" Score State (for the big winner display)
             const [liveScore, setLiveScore] = useState(() => load('sb_liveScore', { top: '', side: '' }));
@@ -227,12 +232,7 @@
                 final: { top: '', side: '' }
             }));
             
-            const [isEditing, setIsEditing] = useState(false);
-
             // Persistence
-            useEffect(() => save('sb_grid', grid), [grid]);
-            useEffect(() => save('sb_topNums', topNums), [topNums]);
-            useEffect(() => save('sb_sideNums', sideNums), [sideNums]);
             useEffect(() => save('sb_scores', scores), [scores]);
             useEffect(() => save('sb_liveScore', liveScore), [liveScore]);
 
@@ -269,8 +269,6 @@
             const q3Win = getWinner(scores.q3);
             const finalWin = getWinner(scores.final);
 
-            // Determine which cell to highlight. If Live Score is entered, highlight that.
-            // Otherwise, we can highlight quarterly winners if needed, but usually Live is the focus.
             const activeHighlight = liveWinner ? `${liveWinner.side}-${liveWinner.top}` : null;
 
             return (
@@ -280,12 +278,10 @@
                     {/* Header Controls */}
                     <div className="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center">
                         <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pool Manager</div>
-                        <button 
-                            onClick={()=>setIsEditing(!isEditing)} 
-                            className={`text-[10px] font-bold px-3 py-1 rounded uppercase tracking-wider transition-colors ${isEditing ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600'}`}
-                        >
-                            {isEditing ? 'Finish Editing' : 'Edit Grid'}
-                        </button>
+                        <div className="text-[10px] font-bold px-3 py-1 rounded uppercase tracking-wider bg-gray-100 text-green-700 flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            Finalized
+                        </div>
                     </div>
 
                     <div className="max-w-3xl mx-auto p-4 space-y-6">
@@ -393,9 +389,7 @@
                                 {/* 2. Top Numbers */}
                                 {topNums.map((n, i) => (
                                     <div key={`tn-${i}`} className="header-nums-top" style={{ gridColumn: i + 3 }}>
-                                        {isEditing ? <input className="w-full h-full text-center outline-none bg-yellow-50 font-bold" value={n} onChange={(e)=>{
-                                            const arr=[...topNums]; arr[i]=parseInt(e.target.value)||0; setTopNums(arr);
-                                        }}/> : n}
+                                        {n}
                                     </div>
                                 ))}
 
@@ -410,9 +404,7 @@
                                         
                                         {/* Side Number */}
                                         <div className="header-nums-left" style={{ gridRow: rIdx + 3 }}>
-                                            {isEditing ? <input className="w-full h-full text-center outline-none bg-yellow-50 font-bold" value={sNum} onChange={(e)=>{
-                                                const arr=[...sideNums]; arr[rIdx]=parseInt(e.target.value)||0; setSideNums(arr);
-                                            }}/> : sNum}
+                                            {sNum}
                                         </div>
 
                                         {/* Grid Cells */}
@@ -428,19 +420,9 @@
                                                     `}
                                                     style={{ gridRow: rIdx + 3, gridColumn: cIdx + 3 }}
                                                 >
-                                                    {isEditing ? (
-                                                        <input 
-                                                            className="w-full text-center text-xs outline-none bg-gray-50 h-full" 
-                                                            value={grid[rIdx][cIdx]} 
-                                                            onChange={(e)=>{
-                                                                const g=[...grid]; g[rIdx][cIdx]=e.target.value; setGrid(g);
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <span className="leading-tight text-xs md:text-sm font-medium break-words w-full px-0.5">
-                                                            {grid[rIdx][cIdx]}
-                                                        </span>
-                                                    )}
+                                                    <span className="leading-tight text-xs md:text-sm font-medium break-words w-full px-0.5">
+                                                        {grid[rIdx][cIdx]}
+                                                    </span>
                                                 </div>
                                             );
                                         })}
@@ -455,6 +437,12 @@
                         </div>
 
                     </div>
+
+                    <footer className="mt-12 mb-6 text-center">
+                        <div className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+                            Website Developed by Andrew Gutierrez • (949) 576-4936
+                        </div>
+                    </footer>
                 </div>
             );
         }
@@ -464,5 +452,3 @@
     </script>
 </body>
 </html>
-
-
